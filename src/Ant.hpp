@@ -128,7 +128,7 @@ struct RuleState
 struct Grid
 {
     Grid(std::size_t _w, std::size_t _h, std::span<const CELL_DIR> rules)
-        : cells(_w * _h), cellColors(_w * _h), w(_w), h(_h)
+        : cells(_w * _h), cellColors(_w * _h), w(_w), h(_h), ant(_w / 2, _h / 2)
     {
         std::vector<Color> sequenceColors(rules.size());
         FillRandomColors(sequenceColors);
@@ -145,7 +145,7 @@ struct Grid
         }
     }
 
-    inline void simulate(Ant& ant)
+    inline void simulate()
     {
         int curIdx = ant.y * w + ant.x;
 
@@ -163,9 +163,11 @@ struct Grid
 
     std::vector<Cell> cells;
 
+    Ant ant;
+    std::size_t w, h;
+
 private:
     std::vector<Color> cellColors;
     std::unordered_map<Color, RuleState> ruleMap;
     Color* nextColor = nullptr;
-    std::size_t w, h;
 };

@@ -3,10 +3,15 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
+
 #include <cstdint>
 #include <algorithm>
 
 #include "Ant.hpp"
+#include "Menu.hpp"
 
 constexpr int WIND_W = 800;
 constexpr int WIND_H = 600;
@@ -14,7 +19,6 @@ constexpr const char* WIND_TITLE = "Langton's Ant";
 
 constexpr int GRID_W = 250;
 constexpr int GRID_H = 250;
-constexpr int GRID_PADDING = 5;
 
 constexpr const char vertShader_src[] = {
     #embed "shaders/shader.vert"
@@ -42,8 +46,11 @@ static bool isDragging = false;
 static double lastX = 0.0;
 static double lastY = 0.0;
 
+static bool showMenu = true;
+
 void mousebutton_CB(GLFWwindow* window, int button, int action, int mods)
 {
+    if(ImGui::GetIO().WantCaptureMouse) return;
     if(button == GLFW_MOUSE_BUTTON_LEFT){
         if(action == GLFW_PRESS) {
             isDragging = true;
@@ -51,11 +58,16 @@ void mousebutton_CB(GLFWwindow* window, int button, int action, int mods)
         } else if (action == GLFW_RELEASE) {
             isDragging = false;
         }
+    } else if(button == GLFW_MOUSE_BUTTON_RIGHT) {
+        if(action == GLFW_RELEASE) {
+            showMenu = !showMenu;
+        }
     }
 }
 
 void cursorpos_CB(GLFWwindow* window, double xpos, double ypos)
 {
+    if(ImGui::GetIO().WantCaptureMouse) return;
     if(isDragging) {
         double deltaX = xpos - lastX;
         double deltaY = ypos - lastY;
@@ -106,10 +118,21 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
+    glfwSwapInterval(1);
+
     glfwSetFramebufferSizeCallback(window, resize_CB);
     glfwSetScrollCallback(window, scroll_CB);
     glfwSetMouseButtonCallback(window, mousebutton_CB);
     glfwSetCursorPosCallback(window, cursorpos_CB);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 430 core");
 
     {
         int w, h;
@@ -151,14 +174,12 @@ int main(void)
     glBindTexture(GL_TEXTURE_2D, gridText);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = {0.05f, 0.05f, 0.05f, 1.0f};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-
-    const auto rules = CreateRulesFromString("LRLRRRLR");
-
-    Grid grid(GRID_W, GRID_H, rules);
-    Ant ant(GRID_W / 2, GRID_H / 2);
+    Menu menu(GRID_W, GRID_H);
 
     glUseProgram(program);
 
@@ -167,28 +188,35 @@ int main(void)
     int zoomLoc = glGetUniformLocation(program, "zoom");
     int panLoc = glGetUniformLocation(program, "pan");
 
-    glUniform2f(gridSizeLoc, float(GRID_W), float(GRID_H));
-
-    constexpr int SIM_STEPS = 10;
+    Grid& grid = menu.GetGrid();
 
     while(!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
 
-        for(int i = 0; i < SIM_STEPS; i++)
-            grid.simulate(ant);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        menu.Render(showMenu);
+
+        for(int i = 0; i < menu.values.simSteps; i++)
+            grid.simulate();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform2f(antPosLoc, float(ant.x), float(ant.y));
+        glUniform2f(antPosLoc, float(grid.ant.x), float(grid.ant.y));
         glUniform1f(zoomLoc, zoomLevel);
         glUniform2f(panLoc, panX, panY);
+        glUniform2f(gridSizeLoc, float(grid.w), float(grid.h));
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, GRID_W, GRID_H, 0, GL_BGRA, GL_UNSIGNED_BYTE, grid.getData());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, grid.w, grid.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, grid.getData());
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     return 0;

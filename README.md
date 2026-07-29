@@ -18,5 +18,6 @@ The code is a bit messy
 
 - GLFW3
 - Dear ImGui
+- GLAD
 
-<sub>*The dependencies will be retrieved through CMake*</sub>
+<sub>*The dependencies (-GLAD) will be retrieved through CMake*</sub>

@@ -46,11 +46,15 @@ void Menu::Render(bool visible)
         if(ImGui::Button("Restart")) {
             recreateGrid = true;
         }
+        ImGui::SameLine();
+        if(ImGui::Button(values.paused ? "Play" : "Pause")) {
+            values.paused = !values.paused;
+        }
         ImGui::Separator();
         if(ImGui::Checkbox("VSync", &values.vsync)) {
             glfwSwapInterval(values.vsync);
         }
-        ImGui::Separator();
+        ImGui::SameLine();
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         ImGui::Separator();
     ImGui::End();

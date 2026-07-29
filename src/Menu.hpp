@@ -10,6 +10,7 @@ struct MenuValues
     int simSteps = 10;
     std::string rules = "LRLRRRLR";
     bool vsync = true;
+    bool paused = true;
 };
 
 class Menu

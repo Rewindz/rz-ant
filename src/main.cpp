@@ -72,8 +72,10 @@ void cursorpos_CB(GLFWwindow* window, double xpos, double ypos)
         double deltaX = xpos - lastX;
         double deltaY = ypos - lastY;
         lastX = xpos; lastY = ypos;
-        panX += float(deltaX / WIND_W);
-        panY += float(deltaY / WIND_H);
+        int w, h;
+        glfwGetFramebufferSize(window, &w, &h);
+        panX += float(deltaX / w);
+        panY += float(deltaY / h);
     }
 }
 
@@ -200,8 +202,10 @@ int main(void)
 
         menu.Render(showMenu);
 
-        for(int i = 0; i < menu.values.simSteps; i++)
-            grid.simulate();
+        if(!menu.values.paused) {
+            for(int i = 0; i < menu.values.simSteps; i++)
+                grid.simulate();
+        }
 
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -218,6 +222,14 @@ int main(void)
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glDeleteProgram(program);
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
 }

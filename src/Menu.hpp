@@ -4,6 +4,7 @@
 #include <imgui.h>
 
 #include "Ant.hpp"
+#include "Grid.hpp"
 
 struct MenuValues
 {

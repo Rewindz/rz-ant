@@ -10,7 +10,6 @@
 #include <cstdint>
 #include <algorithm>
 
-#include "Ant.hpp"
 #include "Menu.hpp"
 
 constexpr int WIND_W = 800;

@@ -31,7 +31,9 @@ void Menu::Render(bool visible)
 
     ImGui::Begin("Sim Controls");
         ImGui::Text("Right-click off of this menu to toggle it.");
-        ImGui::InputInt("Steps per frame", &values.simSteps, 1, 10);
+        if(ImGui::InputInt("Steps/frame", &values.simSteps, 1, 10)) {
+            values.simSteps = std::clamp(values.simSteps, 0, 100000);
+        }
         if(ImGui::InputInt("Grid Width", &tW, 1, 10)) {
             grid.w = tW;
             recreateGrid = true;
@@ -43,12 +45,25 @@ void Menu::Render(bool visible)
         if(ImGui::InputText("Rules [L|R]", &values.rules, ImGuiInputTextFlags_EnterReturnsTrue)) {
             rulesDirty = true;
         }
+        ImGui::Separator();
+        if(ImGui::Button("Reset Pan")) {
+            callbacks.panRestore();
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("Reset Zoom")) {
+            callbacks.zoomRestore();
+        }
+        ImGui::Separator();
         if(ImGui::Button("Restart")) {
             recreateGrid = true;
         }
         ImGui::SameLine();
         if(ImGui::Button(values.paused ? "Play" : "Pause")) {
             values.paused = !values.paused;
+        }
+        if(values.paused) {
+            ImGui::SameLine();
+            values.step = ImGui::Button("Step");
         }
         ImGui::Separator();
         if(ImGui::Checkbox("VSync", &values.vsync)) {

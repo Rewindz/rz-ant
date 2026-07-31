@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <functional>
 
 #include <imgui.h>
 
@@ -12,13 +13,21 @@ struct MenuValues
     std::string rules = "LRLRRRLR";
     bool vsync = true;
     bool paused = true;
+    bool step = false;
 };
+
+struct MenuCallbacks
+{
+    std::function<void()> panRestore = nullptr;
+    std::function<void()> zoomRestore = nullptr;
+};
+
 
 class Menu
 {
 public:
-    Menu(int defaultWidth, int defaultHeight)
-        : values(), grid(defaultWidth, defaultHeight, CreateRulesFromString(values.rules))
+    Menu(int defaultWidth, int defaultHeight, MenuCallbacks& cbs)
+        : values(), grid(defaultWidth, defaultHeight, CreateRulesFromString(values.rules)), callbacks(cbs)
     {
         lastValidRulesText = values.rules;
     }
@@ -31,6 +40,7 @@ public:
 
 private:
 
+    MenuCallbacks& callbacks;
     Grid grid;
     std::string lastValidRulesText;
 

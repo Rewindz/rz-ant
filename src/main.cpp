@@ -180,12 +180,17 @@ int main(void)
     float borderColor[] = {0.05f, 0.05f, 0.05f, 1.0f};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    Menu menu(GRID_W, GRID_H);
+    MenuCallbacks callbacks;
+    callbacks.panRestore = []() {
+        panY = panX = 0.0f;
+    };
+    callbacks.zoomRestore = []() {
+        zoomLevel = 1.0f;
+    };
+    Menu menu(GRID_W, GRID_H, callbacks);
 
     glUseProgram(program);
 
-    int antPosLoc = glGetUniformLocation(program, "antPos");
-    int gridSizeLoc = glGetUniformLocation(program, "gridSize");
     int zoomLoc = glGetUniformLocation(program, "zoom");
     int panLoc = glGetUniformLocation(program, "pan");
 
@@ -204,14 +209,15 @@ int main(void)
         if(!menu.values.paused) {
             for(int i = 0; i < menu.values.simSteps; i++)
                 grid.simulate();
+        } else if(menu.values.step) {
+            grid.simulate();
+            menu.values.step = false;
         }
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUniform2f(antPosLoc, float(grid.ant.x), float(grid.ant.y));
         glUniform1f(zoomLoc, zoomLevel);
         glUniform2f(panLoc, panX, panY);
-        glUniform2f(gridSizeLoc, float(grid.w), float(grid.h));
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, grid.w, grid.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, grid.getData());
         glBindVertexArray(VAO);

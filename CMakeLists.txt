@@ -54,3 +54,9 @@ target_include_directories(langtonant PRIVATE
 "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 target_link_libraries(langtonant PRIVATE glfw libimgui)
+
+if(MSVC)
+    target_compile_options(langtonant PRIVATE /O2)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(langtonant PRIVATE -O3)
+endif()

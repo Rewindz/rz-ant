@@ -180,6 +180,10 @@ int main(void)
     float borderColor[] = {0.05f, 0.05f, 0.05f, 1.0f};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
+    auto gridUpdate = [](const Grid& g) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, g.w, g.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+    };
+
     MenuCallbacks callbacks;
     callbacks.panRestore = []() {
         panY = panX = 0.0f;
@@ -187,6 +191,7 @@ int main(void)
     callbacks.zoomRestore = []() {
         zoomLevel = 1.0f;
     };
+    callbacks.gridRecreate = gridUpdate;
     Menu menu(GRID_W, GRID_H, callbacks);
 
     glUseProgram(program);
@@ -195,6 +200,7 @@ int main(void)
     int panLoc = glGetUniformLocation(program, "pan");
 
     Grid& grid = menu.GetGrid();
+    gridUpdate(grid);
 
     while(!glfwWindowShouldClose(window))
     {
@@ -219,7 +225,7 @@ int main(void)
         glUniform1f(zoomLoc, zoomLevel);
         glUniform2f(panLoc, panX, panY);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, grid.w, grid.h, 0, GL_BGRA, GL_UNSIGNED_BYTE, grid.getData());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, grid.w, grid.h, GL_BGRA, GL_UNSIGNED_BYTE, grid.getData());
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

@@ -3,7 +3,6 @@
 #include <vector>
 #include <cstdint>
 #include <format>
-#include <unordered_map>
 
 #include "Color.hpp"
 #include "Ant.hpp"
@@ -35,55 +34,58 @@ inline std::vector<CELL_DIR> CreateRulesFromString(const std::string& rules)
     return res;
 }
 
-struct RuleState
+struct Rule
 {
-    CELL_DIR turnDir;
+    bool turnRight;
+    std::uint8_t nextState;
     Color nextColor;
 };
 
 struct Grid
 {
-    Grid(std::size_t _w, std::size_t _h, std::span<const CELL_DIR> rules)
-        : cells(_w * _h), cellColors(_w * _h), w(_w), h(_h), ant(_w / 2, _h / 2)
+    Grid(std::size_t _w, std::size_t _h, std::span<const CELL_DIR> _rules)
+        : w(_w), h(_h), ant(_w / 2, _h / 2), states(_w * _h, 0), pixels(_w * _h)
     {
-        std::vector<Color> sequenceColors(rules.size());
-        FillRandomColors(sequenceColors);
+        std::vector<Color> colorSeq(_rules.size());
+        FillRandomColors(colorSeq);
 
-        for(std::size_t i = 0; i < rules.size(); i++) {
-            Color nextColor = sequenceColors[(i + 1) % rules.size()];
-            ruleMap[sequenceColors[i]] = { rules[i], nextColor };
+        rules.resize(_rules.size());
+        for(std::size_t i = 0; i < _rules.size(); i++) {
+            std::uint8_t nextIdx = (i + 1) % _rules.size();
+            rules[i].turnRight = (_rules[i] == CELL_DIR::RIGHT);
+            rules[i].nextState = nextIdx;
+            rules[i].nextColor = colorSeq[nextIdx];
         }
 
-        Color defaultColor = sequenceColors[0];
-        for(std::size_t i = 0; i < _w * _h; i++) {
-            cellColors[i] = defaultColor;
-            cells[i].color = cellColors.data() + i;
+        for(auto& p : pixels) {
+            p = colorSeq[0];
         }
     }
 
     inline void simulate()
     {
         int curIdx = ant.y * w + ant.x;
+        std::uint8_t curState = states[curIdx];
+        const auto& rule = rules[curState];
 
-        Color curColor = *cells[curIdx].color;
-        const RuleState& state = ruleMap.at(curColor);
-        if(state.turnDir == CELL_DIR::RIGHT)
+        if(rule.turnRight)
             ant.turnRight();
         else
             ant.turnLeft();
-        *cells[curIdx].color = state.nextColor;
+
+        states[curIdx] = rule.nextState;
+        pixels[curIdx] = rule.nextColor;
         ant.move(w, h);
     }
 
-    inline Color* getData() { return cellColors.data(); }
-
-    std::vector<Cell> cells;
+    inline const Color* getData() const { return pixels.data(); }
 
     Ant ant;
     std::size_t w, h;
 
 private:
-    std::vector<Color> cellColors;
-    std::unordered_map<Color, RuleState> ruleMap;
-    Color* nextColor = nullptr;
+    std::vector<std::uint8_t> states;
+    std::vector<Color> pixels;
+    std::vector<Rule> rules;
+
 };

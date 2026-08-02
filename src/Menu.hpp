@@ -20,6 +20,7 @@ struct MenuCallbacks
 {
     std::function<void()> panRestore = nullptr;
     std::function<void()> zoomRestore = nullptr;
+    std::function<void(const Grid&)> gridRecreate = nullptr;
 };
 
 

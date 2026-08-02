@@ -1,6 +1,7 @@
 #pragma once
+#include <cstdint>
 
-enum class DIRECTION
+enum class DIRECTION : std::uint8_t
 {
     UP = 0,
     RIGHT,
@@ -20,29 +21,27 @@ struct Ant
 
     inline void turnRight()
     {
-        curDirection = static_cast<DIRECTION>((static_cast<int>(curDirection) + 1) % 4);
+        curDirection = static_cast<DIRECTION>((static_cast<int>(curDirection) + 1) & 3);
     }
 
     inline void turnLeft()
     {
-        curDirection = static_cast<DIRECTION>((static_cast<int>(curDirection) + 3) % 4);
+        curDirection = static_cast<DIRECTION>((static_cast<int>(curDirection) + 3) & 3);
     }
 
     inline void move(int grid_w, int grid_h)
     {
-        switch(curDirection)
-        {
-            case DIRECTION::UP:    y--; break;
-            case DIRECTION::RIGHT: x++; break;
-            case DIRECTION::DOWN:  y++; break;
-            case DIRECTION::LEFT:  x--; break;
-        }
+        static constexpr int dx[4] = {  0,  1,  0, -1 };
+        static constexpr int dy[4] = { -1,  0,  1,  0 };
 
-        if(x < 0) x = grid_w - 1;
-        else if(x >= grid_w) x = 0;
+        x += dx[static_cast<uint8_t>(curDirection)];
+        y += dy[static_cast<uint8_t>(curDirection)];
 
-        if(y < 0) y = grid_h - 1;
-        else if(y >= grid_h) y = 0;
+        if(x < 0) [[unlikely]] x = grid_w - 1;
+        else if(x >= grid_w) [[unlikely]]  x = 0;
+
+        if(y < 0) [[unlikely]] y = grid_h - 1;
+        else if(y >= grid_h) [[unlikely]] y = 0;
     }
 
 };

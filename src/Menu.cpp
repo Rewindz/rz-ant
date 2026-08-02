@@ -83,7 +83,9 @@ void Menu::Render(bool visible)
         }
     }
 
-    if(recreateGrid || rulesDirty)
+    if(recreateGrid || rulesDirty) {
         grid = Grid(grid.w, grid.h, CreateRulesFromString(values.rules));
+        callbacks.gridRecreate(grid);
+    }
 
 }

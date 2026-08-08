@@ -35,6 +35,7 @@ void resize_CB(GLFWwindow* window, int width, int height)
 static float zoomLevel = 1.0f;
 void scroll_CB(GLFWwindow* window, double xoffset, double yoffset)
 {
+    if(ImGui::GetIO().WantCaptureMouse) return;
     zoomLevel += float(yoffset) * 0.1f;
     zoomLevel = std::clamp(zoomLevel, 0.1f, 10.f);
 }

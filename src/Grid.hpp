@@ -62,6 +62,11 @@ struct Grid
         }
     }
 
+    inline void replaceColor(Color _original, Color _new) {
+        for(auto& pixel : pixels)
+            if(pixel == _original) pixel = _new;
+    }
+
     inline void simulate()
     {
         int curIdx = ant.y * w + ant.x;
@@ -79,6 +84,7 @@ struct Grid
     }
 
     inline const Color* getData() const { return pixels.data(); }
+    inline std::span<Rule> getRules() { return rules; }
 
     Ant ant;
     std::size_t w, h;

@@ -2,10 +2,13 @@
 
 #include <string>
 #include <algorithm>
+#include <format>
 
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>
 #include <GLFW/glfw3.h>
+
+#include "Color.hpp"
 
 bool Menu::validateRulesText()
 {
@@ -45,6 +48,9 @@ void Menu::Render(bool visible)
         if(ImGui::InputText("Rules [L|R]", &values.rules, ImGuiInputTextFlags_EnterReturnsTrue)) {
             rulesDirty = true;
         }
+        if(ImGui::Button("Set Colours")) {
+            values.setColors = true;
+        }
         ImGui::Separator();
         if(ImGui::Button("Reset Pan")) {
             callbacks.panRestore();
@@ -73,6 +79,23 @@ void Menu::Render(bool visible)
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         ImGui::Separator();
     ImGui::End();
+
+    if(values.setColors) {
+        ImGui::Begin("Set Colours", &values.setColors);
+            ImGui::Text("Do not set any two colours to the same colour...");
+            for(auto& rule : grid.getRules()) {
+                auto cols = FloatsFromColor(rule.nextColor);
+                if(ImGui::ColorEdit3(std::format("##{}", rule.nextState).c_str(), cols.data())) {
+                    Color newColor = ColorFromFloats(cols);
+                    grid.replaceColor(rule.nextColor, newColor);
+                    rule.nextColor = newColor;
+                }
+            }
+            if(ImGui::Button("Close")) {
+                values.setColors = false;
+            }
+        ImGui::End();
+    }
 
     if(rulesDirty) {
         if(validateRulesText())

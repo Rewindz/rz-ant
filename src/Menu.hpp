@@ -14,6 +14,7 @@ struct MenuValues
     bool vsync = true;
     bool paused = true;
     bool step = false;
+    bool setColors = false;
 };
 
 struct MenuCallbacks
